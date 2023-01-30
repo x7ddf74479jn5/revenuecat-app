@@ -5,11 +5,13 @@ import ActionRow from "../components/ActionRow";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../App";
 import { useNavigation } from "@react-navigation/native";
+import { useRevenueCat } from "../hooks/useRevenueCat";
 
 type NavigationProps = NativeStackNavigationProp<RootStackParamList, "Home">;
 
 const HomeScreen = () => {
   const navigation = useNavigation<NavigationProps>();
+  const { isProMember } = useRevenueCat();
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100 relative">
@@ -19,7 +21,7 @@ const HomeScreen = () => {
           className="absolute z-50 top-5 right-10 items-center"
         >
           <Ionicons name="person-circle" color="#E5962D" size={30} />
-          <Text className="text-center text-[#E5962D]">UPGRADE</Text>
+          <Text className="text-center text-[#E5962D]">{isProMember ? "PRO" : "UPGRADE"}</Text>
         </TouchableOpacity>
 
         <Image className="w-full h-64" source={{ uri: "https://i.imgur.com/e14NE49.png" }} />

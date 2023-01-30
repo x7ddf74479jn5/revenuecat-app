@@ -1,14 +1,67 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../App";
+import { useRevenueCat } from "../hooks/useRevenueCat";
+import Purchases from "react-native-purchases";
 
 type NavigationProps = NativeStackNavigationProp<RootStackParamList, "Paywall">;
 
 const PaywallScreen = () => {
   const navigation = useNavigation<NavigationProps>();
+  const { currentOffering } = useRevenueCat();
+
+  const handleMonthlyPurchase = async () => {
+    if (!currentOffering?.monthly) return;
+
+    const purchaserInfo = await Purchases.purchasePackage(currentOffering.monthly);
+
+    if (purchaserInfo.customerInfo.entitlements.active.pro) {
+      navigation.goBack();
+    }
+  };
+
+  if (!currentOffering) {
+    return (
+      <View className="Obg- [O#1A2F44] flex-1 p-10">
+        <ActivityIndicator size="large" color=" O#E5962D" />
+      </View>
+    );
+  }
+
+  const handleAnnualPurchase = async () => {
+    if (!currentOffering?.annual) return;
+
+    const purchaserInfo = await Purchases.purchasePackage(currentOffering.annual);
+
+    if (purchaserInfo.customerInfo.entitlements.active.pro) {
+      navigation.goBack();
+    }
+  };
+
+  const restorePurchases = async () => {
+    const purchaserInfo = await Purchases.restorePurchases();
+
+    if (purchaserInfo.activeSubscriptions.length > 0) {
+      Alert.alert("Success", "Your purchase has been restored");
+    } else {
+      Alert.alert("Error", "No purchases to restore");
+    }
+
+    if (purchaserInfo.entitlements.active.pro) {
+      navigation.goBack();
+    }
+  };
+
+  if (!currentOffering) {
+    return (
+      <View className="Obg- [O#1A2F44] flex-1 p-10">
+        <ActivityIndicator size="large" color=" O#E5962D" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView className="bg-[#1A2F44] flex-1">
@@ -48,7 +101,7 @@ const PaywallScreen = () => {
         </View>
 
         <View className="flex-row space-x-10 items-center">
-          <Ionicons name="md-person-add-outline" size={32} color=" @#E5962D" />
+          <Ionicons name="md-person-add-outline" size={32} color="#E5962D" />
           <View className="flex-1">
             <Text className=" text-white font-bold text-1g">Unlock Limited Edition Content</Text>
             <Text className=" text-white text-sm font-extralight">
@@ -57,6 +110,34 @@ const PaywallScreen = () => {
           </View>
         </View>
       </View>
+
+      <TouchableOpacity
+        onPress={handleMonthlyPurchase}
+        className="items-center px-10 py-5 bg-[#E5962D] mx-10 rounded-full"
+      >
+        <Text className="text-white text-md text-center font-bold mb-1">FREE trial for 1 week...</Text>
+        <Text className="text-white">{currentOffering.monthly?.product.priceString}/month after</Text>
+      </TouchableOpacity>
+
+      {currentOffering.annual && (
+        <TouchableOpacity
+          onPress={handleAnnualPurchase}
+          className="items-center px-10 py-5 border-2 border-[#E5962D] mx-10 rounded-full mt-2"
+        >
+          <Text className="text-white uppercase text-md text-center font-bold mb-1">
+            Save{" "}
+            {(
+              (1 - currentOffering.annual?.product.price! / (currentOffering.monthly?.product.price! * 12)) *
+              100
+            ).toPrecision(2)}
+          </Text>
+          <Text className="text-white">{currentOffering.annual?.product.priceString}/year</Text>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity onPress={restorePurchases} className="m-5">
+        <Text className="text-center text-[#E5962D] ">Restore Purchases</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
